@@ -4,15 +4,14 @@ export default async function mapDB(req, res) {
   if (req.method === "GET") {
     if (req.query.start) {
       if (req.query.start <= 19 && req.query.start >= 0) {
-        console.log(req.query.star)
+        console.log(req.query.start);
         try {
           const result = await prisma.map.findMany({
             where: {
               AND: [
                 {
-                  game: {
-                    startsWith: req.query.start,
-                    mode: "insensitive"
+                  start: {
+                    in: [Number(req.query.start)],
                   },
                 },
               ],

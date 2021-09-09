@@ -12,5 +12,6 @@ model checkmate {
 }
 
 model map {
-  game String @id @db.VarChar
+  start Int     @id
+  game  String? @db.VarChar
 }
