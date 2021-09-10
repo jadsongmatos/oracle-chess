@@ -12,6 +12,11 @@ model checkmate {
 }
 
 model map {
-  start Int     @id
+  start Int     @id(map: "map_pk") @unique(map: "map_start_uindex")
   game  String? @db.VarChar
+}
+
+model in_progress {
+  game String    @id(map: "in_progress_pk") @unique(map: "in_progress_game_uindex") @db.VarChar
+  time DateTime? @default(now()) @db.Timestamp(6)
 }
