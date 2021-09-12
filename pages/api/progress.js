@@ -6,7 +6,26 @@ export default async function progress(req, res) {
     const result = await getProgress();
     res.status(result.status).json(result.data);
   } else if (req.method === "POST") {
-    console.log(req.body)
+    console.log(req.body);
+    if (!req.body) {
+      return res
+        .status(400)
+        .json({
+          message: { games: String(), progress: String(), moves: Array() },
+        });
+    }
+
+    if (!req.body.progress) {
+      return res
+        .status(400)
+        .json({ data: { message: "body.progress", error: req.body.progress } });
+    }
+    if (!req.body.moves) {
+      return res
+        .status(400)
+        .json({ data: { message: "body.moves", error: req.body.moves } });
+    }
+
     const result = await postProgress(req.body);
     res.status(result.status).json(result.data);
   } else {

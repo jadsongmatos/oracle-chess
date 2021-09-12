@@ -1,15 +1,61 @@
 import Head from "next/head";
 import { useState } from "react";
+import genGame from "../lib/genGame";
 //import Image from 'next/image'
 
 export default function Home() {
   const [load, setLoad] = useState(false);
+  const [chess, setChess] = useState({});
 
-  // Difinculdade 20^2
+  const startGame = async () => {
+    console.log("startGame");
+    setLoad(true);
 
-  //const result = genGame(new Chess().history(), [0, 0, 0, 0]);
-  //console.log(result);
-  //console.log(result.length);
+    const getInit = await fetch("api/progress")
+      .then((response) => response.json())
+      .catch((error) => {
+        alert("ERROR :(");
+        console.log("error", error);
+      })
+      .finally(() => {
+        setLoad(false);
+      });
+
+    console.log(getInit);
+    setChess(getInit[0]);
+    if (
+      getInit[0].progress == null ||
+      getInit[0].progress == "" ||
+      !getInit[0].progress
+    ) {
+      calGame(getInit[0].moves);
+    } else {
+      calGame(getInit[0].moves);
+    }
+  };
+
+  const calGame = async (game) => {
+    const result = genGame(game);
+
+    const post = await fetch("http://localhost:3000/api/progress", {
+      method: "POST",
+      headers: new Headers({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify({
+        moves: game, //"[0,0,0,1]",
+        progress: JSON.stringify(result[1]), //"[0,0,0,1,1]",
+        games: result[0],
+      }),
+    })
+      .then((response) => response.json())
+      .catch((error) => {
+        alert("ERROR :(");
+        console.log("error", error);
+      });
+
+    console.log(post);
+  };
 
   return (
     <div>
@@ -23,17 +69,23 @@ export default function Home() {
         <section className="container mb-5 text-center">
           <h1>Oracle Chess</h1>
           <p>Bem vindo ao oracle chess</p>
-          <p>Ajude nosso robo de xadres ficar mais inteligente</p>
+          <p>Ajude nosso robo de xadrez ficar mais inteligente</p>
         </section>
-        <section className="my-5">
+        <section className="container my-5">
+          <div className="mx-auto form-check form-switch">
+            <input
+              className="form-check-input"
+              type="checkbox"
+            />
+            <label className="form-check-label">
+              Auto
+            </label>
+          </div>
           <div className="d-grid gap-2 col-4 mx-auto">
             <button
               className="d-flex align-items-center mx-auto btn btn-lg btn-primary"
               type="button"
-              onClick={(e) => {
-                setLoad(true);
-                console.log(e);
-              }}
+              onClick={startGame}
             >
               {load ? (
                 <>
