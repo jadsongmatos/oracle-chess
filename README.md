@@ -1,3 +1,35 @@
+* buscar progesso null
+  * se tiver
+    * retorna init
+  * se não
+    * busca pelo mais antigo
+      * retorna progresso
+
+
+* verirficar se cota mais antiga passou dos 5 minutos
+  * se não exitir cota em endamento
+    * gerar nova cota
+        * pegar range jogas finalisadas
+            * verificar range bateu no limite
+            * se sim
+                * gerar nova profundidade
+                * entregar nova cota
+            * se não
+              * gerar nova cota
+                * entregar nova cota
+  * se sim
+    * entregar a cota pro novo usuario
+  * se não
+    * gerar nova cota
+      * pegar cota mais alta
+        * verificar cota mais alta bateu no limite
+          * se sim
+            * gerar nova profundidade
+              * entregar nova cota
+          * se não
+            * gerar nova cota
+              * entregar nova cota          
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
