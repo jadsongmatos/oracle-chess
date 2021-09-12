@@ -1,12 +1,21 @@
 import Head from "next/head";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import genGame from "../lib/genGame";
 //import Image from 'next/image'
-
 export default function Home() {
   const [load, setLoad] = useState(false);
-  const [loop,setLoop] = useState(false)
+  const [loop, setLoop] = useState(false);
   const [chess, setChess] = useState({});
+
+  const chessWorker = new Worker("../public/worker.js");
+
+  useEffect(() => {
+    chessWorker.onmessage = ($event) => {
+      if ($event && $event.data) {
+        console.log($event.data);
+      }
+    };
+  }, [chessWorker]);
 
   const startGame = async () => {
     console.log("startGame");
@@ -29,9 +38,11 @@ export default function Home() {
       getInit[0].progress == "" ||
       !getInit[0].progress
     ) {
-      calGame(getInit[0].moves);
+      //calGame(getInit[0].moves);
+      chessWorker.postMessage(getInit[0].moves);
     } else {
-      calGame(getInit[0].moves);
+      //calGame(getInit[0].progress);
+      chessWorker.postMessage(getInit[0].progress);
     }
   };
 
@@ -56,8 +67,8 @@ export default function Home() {
       });
 
     console.log(post);
-    if(loop == true){
-      startGame()
+    if (loop == true) {
+      startGame();
     }
   };
 
@@ -80,11 +91,11 @@ export default function Home() {
             <input
               className="form-check-input"
               type="checkbox"
-              onClick={(e) => {setLoop(!loop)}}
+              onClick={(e) => {
+                setLoop(!loop);
+              }}
             />
-            <label className="form-check-label">
-              Auto
-            </label>
+            <label className="form-check-label">Auto</label>
           </div>
           <div className="d-grid gap-2 col-4 mx-auto">
             <button
