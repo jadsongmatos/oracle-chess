@@ -38,7 +38,7 @@ export default function Home() {
   const calGame = async (game) => {
     const result = await genGame(game);
 
-    const post = await fetch("http://localhost:3000/api/progress", {
+    const post = await fetch("api/progress", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
