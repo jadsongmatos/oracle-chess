@@ -1,7 +1,7 @@
 {
   "name": "nextjs",
-  "version": "1.0.0",
-  "private": true,
+  "version": "0.0.2",
+  "private": false,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@prisma/client": "^3.0.1",
+    "bootstrap": "^5.0.0-beta3",
     "chess.js": "^0.12.0",
     "next": "11.1.2",
     "react": "17.0.2",
