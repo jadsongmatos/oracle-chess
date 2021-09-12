@@ -5,6 +5,7 @@ import genGame from "../lib/genGame";
 
 export default function Home() {
   const [load, setLoad] = useState(false);
+  const [loop,setLoop] = useState(false)
   const [chess, setChess] = useState({});
 
   const startGame = async () => {
@@ -35,7 +36,7 @@ export default function Home() {
   };
 
   const calGame = async (game) => {
-    const result = genGame(game);
+    const result = await genGame(game);
 
     const post = await fetch("http://localhost:3000/api/progress", {
       method: "POST",
@@ -55,6 +56,9 @@ export default function Home() {
       });
 
     console.log(post);
+    if(loop == true){
+      startGame()
+    }
   };
 
   return (
@@ -76,6 +80,7 @@ export default function Home() {
             <input
               className="form-check-input"
               type="checkbox"
+              onClick={(e) => {setLoop(!loop)}}
             />
             <label className="form-check-label">
               Auto
