@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import  { useEffect, useRef, useCallback,useState }  from "react";
 import genGame from "../lib/genGame";
 //import Image from 'next/image'
 export default function Home() {
@@ -7,15 +7,20 @@ export default function Home() {
   const [loop, setLoop] = useState(false);
   const [chess, setChess] = useState({});
 
-  const chessWorker = new Worker("../public/worker.js");
-
+  const workerRef = useRef()
   useEffect(() => {
-    chessWorker.onmessage = ($event) => {
-      if ($event && $event.data) {
-        console.log($event.data);
-      }
-    };
-  }, [chessWorker]);
+    workerRef.current = new Worker(new URL('../worker.js', import.meta.url))
+    workerRef.current.onmessage = (evt) =>
+      console.log("workerRef: ",evt.data)
+    return () => {
+      workerRef.current.terminate()
+    }
+  }, [])
+
+  const handleWork = useCallback(async (value) => {
+    workerRef.current.postMessage(value)
+  }, [])
+
 
   const startGame = async () => {
     console.log("startGame");
@@ -39,10 +44,10 @@ export default function Home() {
       !getInit[0].progress
     ) {
       //calGame(getInit[0].moves);
-      chessWorker.postMessage(getInit[0].moves);
+      handleWork(getInit[0].moves)
     } else {
       //calGame(getInit[0].progress);
-      chessWorker.postMessage(getInit[0].progress);
+      handleWork(getInit[0].progress)
     }
   };
 

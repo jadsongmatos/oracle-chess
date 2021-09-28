@@ -12,8 +12,8 @@ model checkmate {
 }
 
 model initial {
-  moves    String    @id(map: "initial_pk")
-  progress String?   @unique(map: "initial_progress_uindex")
-  time     DateTime? @default(now()) @db.Timestamp(6)
+  moves    String    @id(map: "4_pk") @unique(map: "4_moves_uindex")
+  progress String?   @unique(map: "4_progress_uindex")
   length   Int?      @default(4) @db.SmallInt
+  time     DateTime? @default(now()) @db.Timestamp(6)
 }
