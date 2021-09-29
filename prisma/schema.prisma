@@ -16,4 +16,6 @@ model initial {
   progress String?   @unique(map: "4_progress_uindex")
   length   Int?      @default(4) @db.SmallInt
   time     DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([time], map: "time_index")
 }

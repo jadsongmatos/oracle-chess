@@ -16,7 +16,7 @@ export default function Home() {
 
     let newChess = [];
     for (let i = 0; i < window.navigator.hardwareConcurrency; i++) {
-      newChess[i] = 0;
+      newChess[i] = 1;
     }
     setChess(newChess);
 
@@ -44,19 +44,41 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    console.log("msg", msg);
+    //console.log("msg", msg);
     if (msg) {
       if (msg.type == "then") {
         let newChes = [...chess];
-        newChes[msg.thread] = { ...newChes[msg.thread], ...msg.data };
+        newChes[msg.thread] = Object.assign({}, chess[msg.thread], msg.data);
         setChess(newChes);
+
         setNRange(nRanges + 100);
       } else if (msg.type == "finally") {
-        let newChess = [...chess];
-        postGames(chess[msg.thread].moves, msg.data);
-        newChess[msg.thread] = 0;
-        setChess(newChess);
-        startGame();
+        console.log("finally:", chess[msg.thread].moves, "thread:", msg.thread);
+        console.log("Chess", chess);
+
+        if (chess[msg.thread].moves) {
+          postGames(chess[msg.thread].moves, msg.data);
+          let newChess = [...chess];
+          newChess[msg.thread] = 1;
+          setChess(newChess);
+          startGame();
+        }
+      } else if (msg.type == "start") {
+        chess.forEach((e, i) => {
+          if (e.progress == null || e.progress == "" || !e.progress) {
+            handleWork(i, {
+              type: "calGame",
+              moves: e.moves,
+              game: escape.moves,
+            });
+          } else {
+            handleWork(i, {
+              type: "calGame",
+              moves: ineit.progress,
+              game: e.moves,
+            });
+          }
+        });
       }
     }
   }, [msg]);
@@ -65,47 +87,51 @@ export default function Home() {
     workerRef.current[thread].postMessage(value);
   }, []);
 
-  const startGame = () => {
+  function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min;
+  }
+
+  const startGame = async () => {
     console.log("startGame", chess);
     setLoad(true);
-
-    chess.forEach((e, i) => {
-      if (e == 0) {
-        fetch("api/progress/" + 1)
-          .then((response) => response.json())
-          .then((init) => {
-            let newChess = [...chess];
-            newChess[i] = init;
-            setChess(newChess);
-            console.log("Chess", i, chess);
-
-            if (
-              init.progress == null ||
-              init.progress == "" ||
-              !init.progress
-            ) {
-              handleWork(i, {
-                type: "calGame",
-                moves: init.moves,
-                game: init.moves,
-              });
-            } else {
-              handleWork(i, {
-                type: "calGame",
-                moves: init.progress,
-                game: init.moves,
-              });
+    if (Array.isArray(chess)) {
+      let tmp = await Promise.all(
+        chess.map(async (e, i) => {
+          if (e == 1) {
+            try {
+              const response = await fetch(
+                "api/progress/" + getRandomInt(0, 1000)
+              );
+              const init = await response.json();
+              return [i, await init];
+            } catch (error) {
+              alert("Aconteceu algum erro confira console pra mais detalhes");
+              console.log("fetch error", error);
             }
-          })
-          .catch((error) => {
-            alert("Aconteceu algum erro confira console pra mais detalhes");
-            console.log("fetch error", error);
-          })
-          .finally(() => {
-            console.log("get");
-          });
+          } else {
+            return e;
+          }
+        })
+      );
+
+      console.log("tmp", tmp);
+      let newChess = [...chess];
+      tmp.forEach((e) => {
+        newChess[e[0]] = e[1];
+      });
+      setChess(newChess);
+      setMsg({ type: "start" });
+
+      console.log("Chess 128", newChess);
+    } else {
+      let newChess = [];
+      for (let i = 0; i < nThreads; i++) {
+        newChess[i] = 1;
       }
-    });
+      setChess(newChess);
+    }
   };
 
   const postGames = async (game, result) => {
@@ -153,7 +179,7 @@ export default function Home() {
                   return (
                     <li key={i}>
                       <h5>Robo: {i + 1}</h5>
-                      {games && games != 0 && games.index ? (
+                      {games && games != 1 && games != 0 && games.index ? (
                         <div className="progress">
                           <div
                             className="progress-bar progress-bar-striped"

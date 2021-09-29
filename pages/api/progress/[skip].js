@@ -3,8 +3,8 @@ import postProgress from "../../../lib/postProgress";
 
 export default async function progress(req, res) {
   if (req.method === "GET") {
-    if (req.query.threads) {
-      const result = await getProgress(req.query.threads);
+    if (req.query.skip) {
+      const result = await getProgress(req.query.skip);
       res.status(result.status).json(result.data);
     } else {
       return res.status(400);
