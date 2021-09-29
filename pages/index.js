@@ -52,33 +52,38 @@ export default function Home() {
         setChess(newChes);
 
         setNRange(nRanges + 100);
+        setLoad(true);
       } else if (msg.type == "finally") {
         console.log("finally:", chess[msg.thread].moves, "thread:", msg.thread);
-        console.log("Chess", chess);
+        //console.log("Chess", chess);
 
-        if (chess[msg.thread].moves) {
-          postGames(chess[msg.thread].moves, msg.data);
-          let newChess = [...chess];
-          newChess[msg.thread] = 1;
-          setChess(newChess);
-          startGame();
+        postGames(chess[msg.thread].moves, msg.data);
+        let newChess = [...chess];
+        newChess[msg.thread] = 1;
+        setChess(newChess);
+        if (loop) {
+          setMsg({ type: "statGame" });
+        } else {
+          setLoad(false);
         }
-      } else if (msg.type == "start") {
+      } else if (msg.type == "calGame") {
         chess.forEach((e, i) => {
           if (e.progress == null || e.progress == "" || !e.progress) {
             handleWork(i, {
               type: "calGame",
               moves: e.moves,
-              game: escape.moves,
+              game: e.moves,
             });
           } else {
             handleWork(i, {
               type: "calGame",
-              moves: ineit.progress,
+              moves: e.progress,
               game: e.moves,
             });
           }
         });
+      } else if (msg.type == "statGame") {
+        startGame();
       }
     }
   }, [msg]);
@@ -97,7 +102,7 @@ export default function Home() {
     console.log("startGame", chess);
     setLoad(true);
     if (Array.isArray(chess)) {
-      let tmp = await Promise.all(
+      await Promise.all(
         chess.map(async (e, i) => {
           if (e == 1) {
             try {
@@ -114,17 +119,23 @@ export default function Home() {
             return e;
           }
         })
-      );
+      )
+        .then((tmp) => {
+          console.log("tmp", tmp);
+          let newChess = [...chess];
+          tmp.forEach((e) => {
+            newChess[e[0]] = e[1];
+          });
+          setChess(newChess);
+          setMsg({ type: "calGame" });
 
-      console.log("tmp", tmp);
-      let newChess = [...chess];
-      tmp.forEach((e) => {
-        newChess[e[0]] = e[1];
-      });
-      setChess(newChess);
-      setMsg({ type: "start" });
-
-      console.log("Chess 128", newChess);
+          console.log("Chess 128", newChess);
+        })
+        .catch((error) => {
+          startGame();
+          alert("Aconteceu algum erro confira console pra mais detalhes");
+          console.log("fetch error", error);
+        });
     } else {
       let newChess = [];
       for (let i = 0; i < nThreads; i++) {
@@ -146,7 +157,7 @@ export default function Home() {
         gamesWins: result[0],
       }),
     })
-      .then((response) => response.json())
+      .then((response) => response.text())
       .catch((error) => {
         alert("ERROR :(");
         console.log("error", error);
@@ -184,12 +195,14 @@ export default function Home() {
                           <div
                             className="progress-bar progress-bar-striped"
                             role="progressbar"
-                            style={{ width: games.index / 100 + "%" }}
-                            aria-valuenow={games.index / 100}
+                            style={{
+                              width: Math.floor(games.index / 150) + "%",
+                            }}
+                            aria-valuenow={Math.floor(games.index / 150)}
                             aria-valuemin="0"
                             aria-valuemax="100"
                           >
-                            {games.index / 100}%
+                            {Math.floor(games.index / 150)}%
                           </div>
                         </div>
                       ) : null}
@@ -221,7 +234,7 @@ export default function Home() {
                     role="status"
                     aria-hidden="true"
                   ></span>
-                  Carregando...
+                  Jogando...
                 </>
               ) : (
                 <>Começar</>

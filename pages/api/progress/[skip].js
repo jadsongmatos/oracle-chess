@@ -29,6 +29,7 @@ export default async function progress(req, res) {
     }
 
     const result = await postProgress(req.body);
+    console.log(result)
     res.status(result.status).json(result.data);
   } else {
     res.status(404).json({ method: ["GET", "POST"] });
