@@ -1,18 +1,20 @@
-import getProgress from "../../lib/getProgress";
-import postProgress from "../../lib/postProgress";
+import getProgress from "../../../lib/getProgress";
+import postProgress from "../../../lib/postProgress";
 
 export default async function progress(req, res) {
   if (req.method === "GET") {
-    const result = await getProgress();
-    res.status(result.status).json(result.data);
+    if (req.query.threads) {
+      const result = await getProgress(req.query.threads);
+      res.status(result.status).json(result.data);
+    } else {
+      return res.status(400);
+    }
   } else if (req.method === "POST") {
     console.log(req.body);
     if (!req.body) {
-      return res
-        .status(400)
-        .json({
-          message: { games: String(), progress: String(), moves: Array() },
-        });
+      return res.status(400).json({
+        message: { games: String(), progress: String(), moves: Array() },
+      });
     }
 
     if (!req.body.progress) {

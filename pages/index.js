@@ -1,67 +1,114 @@
 import Head from "next/head";
-import  { useEffect, useRef, useCallback,useState }  from "react";
-import genGame from "../lib/genGame";
+import { useEffect, useRef, useCallback, useState } from "react";
 //import Image from 'next/image'
+
 export default function Home() {
   const [load, setLoad] = useState(false);
   const [loop, setLoop] = useState(false);
-  const [chess, setChess] = useState({});
+  const [chess, setChess] = useState([]);
+  const [nRanges, setNRange] = useState(0);
+  const [nThreads, setNThreads] = useState(1);
+  const [msg, setMsg] = useState();
 
-  const workerRef = useRef()
+  const workerRef = useRef([]);
   useEffect(() => {
-    workerRef.current = new Worker(new URL('../worker.js', import.meta.url))
-    workerRef.current.onmessage = (evt) =>
-      console.log("workerRef: ",evt.data)
-    return () => {
-      workerRef.current.terminate()
+    setNThreads(window.navigator.hardwareConcurrency);
+    for (let i = 0; i < window.navigator.hardwareConcurrency; i++) {
+      console.log("CPU", i);
+      workerRef.current[i] = new Worker(
+        new URL("../worker.js", import.meta.url)
+      );
+      workerRef.current[i].onmessage = (evt) => {
+        if (evt.data.type) {
+          setMsg({ thread: i, type: evt.data.type, data: evt.data.data });
+        } else {
+          console.log("worker: ", i, evt.data);
+        }
+      };
+
+      workerRef.current[i].postMessage({ type: "test" });
     }
-  }, [])
 
-  const handleWork = useCallback(async (value) => {
-    workerRef.current.postMessage(value)
-  }, [])
+    return () => {
+      for (let i = 0; i < nThreads; i++) {
+        workerRef.current[i].terminate();
+      }
+    };
+  }, []);
 
+  useEffect(() => {
+    console.log("msg", msg);
+    if (msg) {
+      if (msg.type == "then") {
+        let newChes = [...chess];
+        newChes[msg.thread] = { ...newChes[msg.thread], ...msg.data };
+        setChess(newChes);
+      } else if (msg.type == "finally") {
+        let newChess = [...chess];
+        
+        
+        console.log("finally",chess[msg.thread].moves, msg.data)
+        //postGames(chess[msg.thread].moves, msg.data);
+        
+        newChess.pop(msg.thread);
+        setChess(newChess);
+      }
+    }
+  }, [msg]);
+
+  const handleWork = useCallback(async (thread, value) => {
+    workerRef.current[thread].postMessage(value);
+  }, []);
 
   const startGame = async () => {
     console.log("startGame");
     setLoad(true);
+    setNRange(nRanges + nThreads);
 
-    const getInit = await fetch("api/progress")
+    const getInit = await fetch("api/progress/" + nThreads)
       .then((response) => response.json())
       .catch((error) => {
         alert("ERROR :(");
-        console.log("error", error);
+        console.log("fetch error", error);
       })
       .finally(() => {
         setLoad(false);
       });
 
-    console.log(getInit);
-    setChess(getInit[0]);
-    if (
-      getInit[0].progress == null ||
-      getInit[0].progress == "" ||
-      !getInit[0].progress
-    ) {
-      //calGame(getInit[0].moves);
-      handleWork(getInit[0].moves)
-    } else {
-      //calGame(getInit[0].progress);
-      handleWork(getInit[0].progress)
+    setChess(getInit);
+    console.log("Chess", chess);
+
+    for (let i = 0; i < nThreads; i++) {
+      if (
+        getInit[i].progress == null ||
+        getInit[i].progress == "" ||
+        !getInit[i].progress
+      ) {
+        handleWork(i, {
+          type: "calGame",
+          moves: getInit[i].moves,
+          game: getInit[i].moves,
+        });
+      } else {
+        handleWork(i, {
+          type: "calGame",
+          moves: getInit[i].progress,
+          game: getInit[i].moves,
+        });
+      }
     }
   };
 
-  const calGame = async (game) => {
-    const result = await genGame(game);
-
-    const post = await fetch("api/progress", {
+  const postGames = async (game, result) => {
+    console.log("postGames",game,result)
+    const post = await fetch("api/progress/post", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
       }),
       body: JSON.stringify({
         moves: game, //"[0,0,0,1]",
-        progress: JSON.stringify(result[1]), //"[0,0,0,1,1]",
+        progress: JSON.stringify(result[1]), //"[0,0,0,1,20]",
         games: result[0],
       }),
     })
@@ -72,9 +119,6 @@ export default function Home() {
       });
 
     console.log(post);
-    if (loop == true) {
-      startGame();
-    }
   };
 
   return (
@@ -92,6 +136,21 @@ export default function Home() {
           <p>Ajude nosso robo de xadrez ficar mais inteligente</p>
         </section>
         <section className="container my-5">
+          <h1>Jogas: {nRanges}</h1>
+          <h5>{nThreads} Robôs</h5>
+          <ul>
+            {Array.isArray(chess)
+              ? chess.map((games, i) => {
+                  return (
+                    <li key={i}>
+                      <h5>
+                        {JSON.stringify(games)} Robo: {i}
+                      </h5>
+                    </li>
+                  );
+                })
+              : null}
+          </ul>
           <div className="mx-auto form-check form-switch">
             <input
               className="form-check-input"
