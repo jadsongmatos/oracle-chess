@@ -5,7 +5,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 export default function Home() {
   const [load, setLoad] = useState(false);
   const [loop, setLoop] = useState(false);
-  const [chess, setChess] = useState([]);
+  const [chess, setChess] = useState([0]);
   const [nRanges, setNRange] = useState(0);
   const [nThreads, setNThreads] = useState(1);
   const [msg, setMsg] = useState();
@@ -13,6 +13,13 @@ export default function Home() {
   const workerRef = useRef([]);
   useEffect(() => {
     setNThreads(window.navigator.hardwareConcurrency);
+
+    let newChess = [];
+    for (let i = 0; i < window.navigator.hardwareConcurrency; i++) {
+      newChess[i] = 0;
+    }
+    setChess(newChess);
+
     for (let i = 0; i < window.navigator.hardwareConcurrency; i++) {
       console.log("CPU", i);
       workerRef.current[i] = new Worker(
@@ -43,15 +50,13 @@ export default function Home() {
         let newChes = [...chess];
         newChes[msg.thread] = { ...newChes[msg.thread], ...msg.data };
         setChess(newChes);
+        setNRange(nRanges + 100);
       } else if (msg.type == "finally") {
         let newChess = [...chess];
-        
-        
-        console.log("finally",chess[msg.thread].moves, msg.data)
-        //postGames(chess[msg.thread].moves, msg.data);
-        
-        newChess.pop(msg.thread);
+        postGames(chess[msg.thread].moves, msg.data);
+        newChess[msg.thread] = 0;
         setChess(newChess);
+        startGame();
       }
     }
   }, [msg]);
@@ -60,47 +65,50 @@ export default function Home() {
     workerRef.current[thread].postMessage(value);
   }, []);
 
-  const startGame = async () => {
-    console.log("startGame");
+  const startGame = () => {
+    console.log("startGame", chess);
     setLoad(true);
-    setNRange(nRanges + nThreads);
 
-    const getInit = await fetch("api/progress/" + nThreads)
-      .then((response) => response.json())
-      .catch((error) => {
-        alert("ERROR :(");
-        console.log("fetch error", error);
-      })
-      .finally(() => {
-        setLoad(false);
-      });
+    chess.forEach((e, i) => {
+      if (e == 0) {
+        fetch("api/progress/" + 1)
+          .then((response) => response.json())
+          .then((init) => {
+            let newChess = [...chess];
+            newChess[i] = init;
+            setChess(newChess);
+            console.log("Chess", i, chess);
 
-    setChess(getInit);
-    console.log("Chess", chess);
-
-    for (let i = 0; i < nThreads; i++) {
-      if (
-        getInit[i].progress == null ||
-        getInit[i].progress == "" ||
-        !getInit[i].progress
-      ) {
-        handleWork(i, {
-          type: "calGame",
-          moves: getInit[i].moves,
-          game: getInit[i].moves,
-        });
-      } else {
-        handleWork(i, {
-          type: "calGame",
-          moves: getInit[i].progress,
-          game: getInit[i].moves,
-        });
+            if (
+              init.progress == null ||
+              init.progress == "" ||
+              !init.progress
+            ) {
+              handleWork(i, {
+                type: "calGame",
+                moves: init.moves,
+                game: init.moves,
+              });
+            } else {
+              handleWork(i, {
+                type: "calGame",
+                moves: init.progress,
+                game: init.moves,
+              });
+            }
+          })
+          .catch((error) => {
+            alert("Aconteceu algum erro confira console pra mais detalhes");
+            console.log("fetch error", error);
+          })
+          .finally(() => {
+            console.log("get");
+          });
       }
-    }
+    });
   };
 
   const postGames = async (game, result) => {
-    console.log("postGames",game,result)
     const post = await fetch("api/progress/post", {
       method: "POST",
       headers: new Headers({
@@ -109,7 +117,7 @@ export default function Home() {
       body: JSON.stringify({
         moves: game, //"[0,0,0,1]",
         progress: JSON.stringify(result[1]), //"[0,0,0,1,20]",
-        games: result[0],
+        gamesWins: result[0],
       }),
     })
       .then((response) => response.json())
@@ -137,15 +145,28 @@ export default function Home() {
         </section>
         <section className="container my-5">
           <h1>Jogas: {nRanges}</h1>
+
           <h5>{nThreads} Robôs</h5>
           <ul>
             {Array.isArray(chess)
               ? chess.map((games, i) => {
                   return (
                     <li key={i}>
-                      <h5>
-                        {JSON.stringify(games)} Robo: {i}
-                      </h5>
+                      <h5>Robo: {i + 1}</h5>
+                      {games && games != 0 && games.index ? (
+                        <div className="progress">
+                          <div
+                            className="progress-bar progress-bar-striped"
+                            role="progressbar"
+                            style={{ width: games.index / 100 + "%" }}
+                            aria-valuenow={games.index / 100}
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                          >
+                            {games.index / 100}%
+                          </div>
+                        </div>
+                      ) : null}
                     </li>
                   );
                 })
