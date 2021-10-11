@@ -59,6 +59,7 @@ export default function Home() {
 
                     let newChess = [...chess];
                     newChess[msg.thread].done = true;
+                    newChess[msg.thread].index = 0;
                     setChess(newChess);
 
                     postGames(chess[msg.thread].moves, msg.data)
@@ -69,18 +70,20 @@ export default function Home() {
                     }
                 } else if (msg.type === "calGame") {
                     chess.forEach((e, i) => {
-                        if (e.progress == null || e.progress == "" || !e.progress) {
-                            handleWork(i, {
-                                type: "calGame",
-                                moves: e.moves,
-                                game: e.moves,
-                            });
-                        } else {
-                            handleWork(i, {
-                                type: "calGame",
-                                moves: e.progress,
-                                game: e.moves,
-                            });
+                        if (e.moves) {
+                            if (e.progress === null || e.progress === "" || !e.progress) {
+                                handleWork(i, {
+                                    type: "calGame",
+                                    moves: e.moves,
+                                    game: e.moves,
+                                });
+                            } else {
+                                handleWork(i, {
+                                    type: "calGame",
+                                    moves: e.progress,
+                                    game: e.moves,
+                                });
+                            }
                         }
                     });
                 } else if (msg.type === "statGame") {
@@ -105,41 +108,27 @@ export default function Home() {
         console.log("startGame", chess);
         setLoad(true);
         if (Array.isArray(chess)) {
-            await Promise.all(
-                chess.map(async (e, i) => {
+            chess.map(async (e, i) => {
                     if (e.done === true) {
                         console.log("done true", e)
-                        try {
-                            const response = await fetch(
-                                "api/progress/" + getRandomInt(0, 1000)
-                            );
-                            const init = await response.json();
-                            return [i, await init];
-                        } catch (error) {
-                            alert("Aconteceu algum erro confira console pra mais detalhes");
-                            console.log("fetch error", error);
-                        }
-                    }
-                })
-            )
-                .then((tmp) => {
-                    console.log("Promise.all then", tmp);
-                    if (tmp.length !== 0) {
+
+                        const response = await fetch("api/progress/" + getRandomInt(0, 1000))
+                            .then((resp) => resp.json())
+                            .catch((error) => {
+                                console.error("fetch error", error);
+                            });
+
+
                         let newChess = [...chess];
-                        tmp.forEach((e, i) => {
-                            newChess[e[0]] = Object.assign({}, newChess[e[0]], e[1]);
-                            newChess[e[0]].done = false;
-                        });
+                        newChess[i] = Object.assign({}, newChess[i], response);
+                        newChess[i].done = false;
+
                         console.log("Chess 128", newChess);
                         setChess(newChess);
                         setMsg({type: "calGame"});
                     }
-                })
-                .catch((error) => {
-                    startGame();
-                    alert("Aconteceu algum erro confira console pra mais detalhes");
-                    console.log("fetch error", error);
-                });
+                }
+            )
         } else {
             let newChess = [];
             for (let i = 0; i < nThreads; i++) {
