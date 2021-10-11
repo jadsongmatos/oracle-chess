@@ -48,8 +48,7 @@ export default function Home() {
             if (msg.type) {
                 if (msg.type === "then") {
                     let newChes = [...chess];
-                    newChes[msg.thread] = Object.assign({}, chess[msg.thread], msg.data);
-                    //console.log("then",newChes)
+                    newChes[msg.thread].data = msg.data;
                     setChess(newChes);
 
                     setNRange(nRanges + 100);
@@ -59,33 +58,17 @@ export default function Home() {
 
                     let newChess = [...chess];
                     newChess[msg.thread].done = true;
-                    newChess[msg.thread].index = 0;
+                    newChess[msg.thread].data.index = 0;
                     setChess(newChess);
 
-                    postGames(chess[msg.thread].moves, msg.data)
+                    postGames(chess[msg.thread].game.moves, msg.data)
                     if (loop) {
                         setMsg({type: "statGame"});
                     } else {
                         setLoad(false);
                     }
                 } else if (msg.type === "calGame") {
-                    chess.forEach((e, i) => {
-                        if (e.moves) {
-                            if (e.progress === null || e.progress === "" || !e.progress) {
-                                handleWork(i, {
-                                    type: "calGame",
-                                    moves: e.moves,
-                                    game: e.moves,
-                                });
-                            } else {
-                                handleWork(i, {
-                                    type: "calGame",
-                                    moves: e.progress,
-                                    game: e.moves,
-                                });
-                            }
-                        }
-                    });
+                    calGame()
                 } else if (msg.type === "statGame") {
                     startGame();
                 }
@@ -93,6 +76,33 @@ export default function Home() {
         }
     }, [msg]);
 
+    const calGame = async () => {
+        console.log("calGame", chess)
+        let newChess = [...chess];
+        chess.forEach((e, i) => {
+            if (e.done === "new") {
+                if (e.game) {
+                    if (e.game.moves) {
+                        newChess[i].done = false;
+                        if (e.game.progress === null || e.game.progress === "" || !e.game.progress) {
+                            handleWork(i, {
+                                type: "calGame",
+                                moves: e.game.moves,
+                                game: e.game.moves,
+                            });
+                        } else {
+                            handleWork(i, {
+                                type: "calGame",
+                                moves: e.game.progress,
+                                game: e.game.moves,
+                            });
+                        }
+                    }
+                }
+            }
+        });
+        setChess(newChess);
+    }
     const handleWork = useCallback(async (thread, value) => {
         console.log("handleWork", value)
         workerRef.current[thread].postMessage(value);
@@ -108,31 +118,34 @@ export default function Home() {
         console.log("startGame", chess);
         setLoad(true);
         if (Array.isArray(chess)) {
-            chess.map(async (e, i) => {
-                    if (e.done === true) {
-                        console.log("done true", e)
-
-                        const response = await fetch("api/progress/" + getRandomInt(0, 1000))
-                            .then((resp) => resp.json())
-                            .catch((error) => {
-                                console.error("fetch error", error);
-                            });
-
-
-                        let newChess = [...chess];
-                        newChess[i] = Object.assign({}, newChess[i], response);
-                        newChess[i].done = false;
-
-                        console.log("Chess 128", newChess);
-                        setChess(newChess);
-                        setMsg({type: "calGame"});
-                    }
+            const gamesPromises = chess.map(async (e, i) => {
+                if (e.done === true) {
+                    console.log("done true", i)
+                    return await fetch("api/progress/" + getRandomInt(0, 1000))
+                        .then((resp) => resp.json())
+                        .catch((error) => {
+                            console.error("fetch error", error);
+                        });
+                } else {
+                    return false
                 }
-            )
+            })
+
+            let newChess = [...chess];
+            const games = await Promise.all(gamesPromises)
+            console.log(games)
+            games.forEach((e, i) => {
+                if (e != false) {
+                    newChess[i].game = e;
+                    newChess[i].done = "new"
+                }
+            })
+            setChess(newChess);
+            setMsg({type: "calGame"});
         } else {
             let newChess = [];
             for (let i = 0; i < nThreads; i++) {
-                newChess[i] = 1;
+                newChess[i] = {done: true};
             }
             setChess(newChess);
         }
@@ -154,14 +167,12 @@ export default function Home() {
             alert("ERROR :(");
             console.log("error", error);
         });
-
-
     };
 
     return (
         <div>
             <Head>
-                <title>Create Next App</title>
+                <title>Oracle Chess</title>
                 <meta name="description" content="Oracle Chess"/>
                 <link rel="icon" href="/favicon.ico"/>
             </Head>
@@ -182,19 +193,19 @@ export default function Home() {
                                 return (
                                     <li key={i}>
                                         <h5>Robo: {i + 1}</h5>
-                                        {games && games != 1 && games != 0 && games.index ? (
+                                        {games && games.data && games.data.index ? (
                                             <div className="progress">
                                                 <div
                                                     className="progress-bar progress-bar-striped"
                                                     role="progressbar"
                                                     style={{
-                                                        width: Math.floor(games.index / 150) + "%",
+                                                        width: Math.floor(games.data.index / 150) + "%",
                                                     }}
-                                                    aria-valuenow={Math.floor(games.index / 150)}
+                                                    aria-valuenow={Math.floor(games.data.index / 150)}
                                                     aria-valuemin="0"
                                                     aria-valuemax="100"
                                                 >
-                                                    {Math.floor(games.index / 150)}%
+                                                    {Math.floor(games.data.index / 150)}%
                                                 </div>
                                             </div>
                                         ) : null}
