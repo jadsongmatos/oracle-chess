@@ -1,12 +1,13 @@
 import Head from "next/head";
 import {useCallback, useEffect, useRef, useState} from "react";
+import Link from "next/link";
 //import Image from 'next/image'
 
 export default function Home() {
     const [load, setLoad] = useState(false);
     const [loop, setLoop] = useState(false);
     const [chess, setChess] = useState([0]);
-    const [nRanges, setNRange] = useState(0);
+    const [jogadas, setJogadas] = useState(0);
     const [nThreads, setNThreads] = useState(1);
     const [msg, setMsg] = useState();
 
@@ -15,9 +16,13 @@ export default function Home() {
         setNThreads(window.navigator.hardwareConcurrency);
 
         let newChess = [];
+        const storageChess = localStorage.getItem("chess");
+        const storageJogadas = localStorage.getItem("jogadas");
+        setJogadas(Number(storageJogadas));
         for (let i = 0; i < window.navigator.hardwareConcurrency; i++) {
-            newChess[i] = {done: true};
+            newChess[i] = {done: true, data: storageChess};
         }
+
         setChess(newChess);
 
         for (let i = 0; i < window.navigator.hardwareConcurrency; i++) {
@@ -49,9 +54,11 @@ export default function Home() {
                 if (msg.type === "then") {
                     let newChes = [...chess];
                     newChes[msg.thread].data = msg.data;
+                    localStorage.setItem("chess", JSON.stringify(newChes))
                     setChess(newChes);
 
-                    setNRange(nRanges + 100);
+                    setJogadas(jogadas + 100);
+                    localStorage.setItem("jogadas", JSON.stringify(jogadas))
                     setLoad(true);
                 } else if (msg.type === "finally") {
                     console.log("finally:", chess, "thread:", msg.thread);
@@ -184,7 +191,7 @@ export default function Home() {
                     <p>Ajude em encotrar as melhores jogas de xadrez</p>
                 </section>
                 <section className="container my-5">
-                    <h1>Jogas: {nRanges}</h1>
+                    <h1>Jogadas: {jogadas}</h1>
 
                     <h5>{nThreads} Robôs</h5>
                     <ul>
@@ -232,11 +239,11 @@ export default function Home() {
                         >
                             {load ? (
                                 <>
-                  <span
-                      className="mx-3 spinner-border spinner-border-sm"
-                      role="status"
-                      aria-hidden="true"
-                  ></span>
+                                    <span
+                                        className="mx-3 spinner-border spinner-border-sm"
+                                        role="status"
+                                        aria-hidden="true"
+                                    ></span>
                                     Jogando...
                                 </>
                             ) : (
@@ -250,7 +257,7 @@ export default function Home() {
             <footer className="bd-footer py-1 mt-5 bg-light">
                 <div className="container py-1">
                     <div className="row">
-                        <p>:D</p>
+                        <Link href="https://github.com/Slender1808/oracle-chess">participe :D</Link>
                     </div>
                 </div>
             </footer>
