@@ -252,6 +252,13 @@ export default function Home() {
                         </button>
                     </div>
                 </section>
+                <section className="container mb-3 text-center">
+                    <p>Cada pessoa recebe tem numero de robos então uma jogada de xadrez é enviada para cada um dos seus
+                        robos pra jogar todos proximos 4 movimentos,
+                        depois que robo termina ele envia o resultado para banco de dados, os resultados de todas
+                        pessoas pode ser usado pra encontrar qual melhor movimento em jogo em andamento.</p>
+                    <Link href="https://cloud.prisma.io/Slender1808/oracle-chess/databrowser">Acesse os resultado</Link>
+                </section>
             </main>
 
             <footer className="bd-footer py-1 mt-5 bg-light">
