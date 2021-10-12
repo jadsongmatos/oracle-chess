@@ -7,24 +7,22 @@ import checkProgress from "../lib/checkProgress";
 export default function Home() {
     const [load, setLoad] = useState(false);
     const [loop, setLoop] = useState(false);
-    const [chess, setChess] = useState([0]);
+    const [robosState, setChess] = useState([0]);
     const [jogadas, setJogadas] = useState(0);
     const [nThreads, setNThreads] = useState(1);
     const [msg, setMsg] = useState();
+    
 
     const workerRef = useRef([]);
     useEffect(() => {
         setNThreads(window.navigator.hardwareConcurrency);
 
-        let newChess = [];
         //const storageChess = localStorage.getItem("chess");
         const storageJogadas = localStorage.getItem("jogadas");
         setJogadas(Number(storageJogadas));
         for (let i = 0; i < window.navigator.hardwareConcurrency; i++) {
-            newChess[i] = {done: true, /*data: storageChess*/};
+            robosState[i] = {done: true};
         }
-
-        setChess(newChess);
 
         for (let i = 0; i < window.navigator.hardwareConcurrency; i++) {
             console.log("CPU", i);
@@ -54,23 +52,19 @@ export default function Home() {
             if (msg) {
                 if (msg.type) {
                     if (msg.type === "then") {
-                        let newChes = [...chess];
-                        newChes[msg.thread].data = msg.data;
-                        localStorage.setItem("chess", JSON.stringify(newChes))
-                        setChess(newChes);
+                        robosState[msg.thread].data = msg.data;
+                        localStorage.setItem("chess", JSON.stringify(robosState))
 
                         setJogadas(jogadas + 100);
                         localStorage.setItem("jogadas", JSON.stringify(jogadas))
                         setLoad(true);
                     } else if (msg.type === "finally") {
-                        console.log("finally:", chess, "thread:", msg.thread);
+                        console.log("finally:", robosState, "thread:", msg.thread);
 
-                        let newChess = [...chess];
-                        newChess[msg.thread].done = true;
-                        newChess[msg.thread].data.index = 0;
-                        setChess(newChess);
+                        robosState[msg.thread].done = true;
+                        robosState[msg.thread].data.index = 0;
 
-                        postGames(chess[msg.thread].game.moves, msg.data)
+                        postGames(robosState[msg.thread].game.moves, msg.data)
                         if (loop) {
                             await autoPlay(msg.thread)
                         } else {
@@ -83,13 +77,9 @@ export default function Home() {
     }, [msg]);
 
     const autoPlay = async (thread) => {
-        const game = await startGame(chess[thread])
-
-        let newChess = [...chess];
-        newChess[thread] = {...chess[thread], game: game, done: calGame(thread, game)}
-        setChess(newChess);
-
-        console.log("autoPlay", newChess)
+        const game = await startGame(robosState[thread])
+        robosState[thread] = {...robosState[thread], game: game, done: calGame(thread, game)}
+        console.log("autoPlay", robosState)
     }
 
     const calGame = (thread, game) => {
@@ -139,16 +129,15 @@ export default function Home() {
         return newValue;
     }
 
-    const startGame = async (data) => {
-        console.log("startGame", data);
+    const startGame = async () => {
         setLoad(true);
-        if (data.done === true) {
-            return await fetch("api/progress/" + getRandomInt(0, 1000))
-                .then((resp) => resp.json())
-                .catch((error) => {
-                    console.error("fetch error", error);
-                });
-        }
+
+        return await fetch("api/progress/" + getRandomInt(0, 1000))
+            .then((resp) => resp.json())
+            .catch((error) => {
+                console.error("fetch error", error);
+            });
+
 
     }
 
@@ -188,8 +177,8 @@ export default function Home() {
                 <section className="container my-5">
                     <h1>Jogadas: {abbreviateNumber(jogadas)}</h1>
                     <ul>
-                        {Array.isArray(chess)
-                            ? chess.map((games, i) => {
+                        {Array.isArray(robosState)
+                            ? robosState.map((games, i) => {
                                 return (
                                     <li key={i}>
                                         <h5>Robo: {i + 1}</h5>
@@ -229,17 +218,16 @@ export default function Home() {
                             className="d-flex align-items-center mx-auto btn btn-lg btn-primary"
                             type="button"
                             onClick={async () => {
+                                console.log("Star", robosState)
                                 let i = 0;
-                                let newChess = [...chess];
-                                for (let e of chess) {
+                                for (let e of robosState) {
                                     if (e.done === true) {
-                                        const game = await startGame(e)
-                                        newChess[i] = {...newChess[i], game: game, done: calGame(i, game)}
+                                        const game = await startGame()
+                                        robosState[i] = {...robosState[i], game: game, done: calGame(i, game)}
                                     }
                                     i++;
                                 }
-                                console.log("newChess", newChess)
-                                setChess(newChess);
+                                console.log("Star", robosState)
                             }}
                         >
                             {load ? (
