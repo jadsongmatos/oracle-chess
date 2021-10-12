@@ -121,6 +121,21 @@ export default function Home() {
         return Math.floor(Math.random() * (max - min)) + min;
     }
 
+    function abbreviateNumber(value) {
+        let newValue = value;
+        const suffixes = ["", " Mil", " Milhões", " Bilhões", " Trilhões"];
+        let suffixNum = 0;
+        while (newValue >= 1000) {
+            newValue /= 1000;
+            suffixNum++;
+        }
+
+        newValue = newValue.toPrecision(3);
+
+        newValue += suffixes[suffixNum];
+        return newValue;
+    }
+
     const startGame = async () => {
         console.log("startGame", chess);
         setLoad(true);
@@ -191,7 +206,7 @@ export default function Home() {
                     <p>Ajude em encotrar as melhores jogas de xadrez</p>
                 </section>
                 <section className="container my-5">
-                    <h1>Jogadas: {jogadas}</h1>
+                    <h1>Jogadas: {abbreviateNumber(jogadas)}</h1>
 
                     <h5>{nThreads} Robôs</h5>
                     <ul>
