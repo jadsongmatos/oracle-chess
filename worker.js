@@ -4,7 +4,7 @@ addEventListener("message", async (event) => {
   if (event.data) {
     if (event.data.type === "test") {
       postMessage("Test OK");
-    } else if (event.data.type === "calGame") {
+    } else if (event.data.type === "startWorker") {
       postMessage({
         type: "finally",
         data: await genGame(event.data.moves)

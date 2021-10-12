@@ -1,6 +1,7 @@
 import Head from "next/head";
 import {useCallback, useEffect, useRef, useState} from "react";
 import Link from "next/link";
+import checkProgress from "../lib/checkProgress";
 //import Image from 'next/image'
 
 export default function Home() {
@@ -16,11 +17,11 @@ export default function Home() {
         setNThreads(window.navigator.hardwareConcurrency);
 
         let newChess = [];
-        const storageChess = localStorage.getItem("chess");
+        //const storageChess = localStorage.getItem("chess");
         const storageJogadas = localStorage.getItem("jogadas");
         setJogadas(Number(storageJogadas));
         for (let i = 0; i < window.navigator.hardwareConcurrency; i++) {
-            newChess[i] = {done: true, data: storageChess};
+            newChess[i] = {done: true, /*data: storageChess*/};
         }
 
         setChess(newChess);
@@ -48,67 +49,69 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
-        //console.log("msg", msg);
-        if (msg) {
-            if (msg.type) {
-                if (msg.type === "then") {
-                    let newChes = [...chess];
-                    newChes[msg.thread].data = msg.data;
-                    localStorage.setItem("chess", JSON.stringify(newChes))
-                    setChess(newChes);
+        (async () => {
+            //console.log("msg", msg);
+            if (msg) {
+                if (msg.type) {
+                    if (msg.type === "then") {
+                        let newChes = [...chess];
+                        newChes[msg.thread].data = msg.data;
+                        localStorage.setItem("chess", JSON.stringify(newChes))
+                        setChess(newChes);
 
-                    setJogadas(jogadas + 100);
-                    localStorage.setItem("jogadas", JSON.stringify(jogadas))
-                    setLoad(true);
-                } else if (msg.type === "finally") {
-                    console.log("finally:", chess, "thread:", msg.thread);
+                        setJogadas(jogadas + 100);
+                        localStorage.setItem("jogadas", JSON.stringify(jogadas))
+                        setLoad(true);
+                    } else if (msg.type === "finally") {
+                        console.log("finally:", chess, "thread:", msg.thread);
 
-                    let newChess = [...chess];
-                    newChess[msg.thread].done = true;
-                    newChess[msg.thread].data.index = 0;
-                    setChess(newChess);
+                        let newChess = [...chess];
+                        newChess[msg.thread].done = true;
+                        newChess[msg.thread].data.index = 0;
+                        setChess(newChess);
 
-                    postGames(chess[msg.thread].game.moves, msg.data)
-                    if (loop) {
-                        setMsg({type: "statGame"});
-                    } else {
-                        setLoad(false);
-                    }
-                } else if (msg.type === "calGame") {
-                    calGame()
-                } else if (msg.type === "statGame") {
-                    startGame();
-                }
-            }
-        }
-    }, [msg]);
-
-    const calGame = async () => {
-        console.log("calGame", chess)
-        let newChess = [...chess];
-        chess.forEach((e, i) => {
-            if (e.done === "new") {
-                if (e.game) {
-                    if (e.game.moves) {
-                        newChess[i].done = false;
-                        if (e.game.progress === null || e.game.progress === "" || !e.game.progress) {
-                            handleWork(i, {
-                                type: "calGame",
-                                moves: e.game.moves,
-                                game: e.game.moves,
-                            });
+                        postGames(chess[msg.thread].game.moves, msg.data)
+                        if (loop) {
+                            await autoPlay(msg.thread)
                         } else {
-                            handleWork(i, {
-                                type: "calGame",
-                                moves: e.game.progress,
-                                game: e.game.moves,
-                            });
+                            setLoad(false);
                         }
                     }
                 }
             }
-        });
+        })()
+    }, [msg]);
+
+    const autoPlay = async (thread) => {
+        const game = await startGame(chess[thread])
+
+        let newChess = [...chess];
+        newChess[thread] = {...chess[thread], game: game, done: calGame(thread, game)}
         setChess(newChess);
+
+        console.log("autoPlay", newChess)
+    }
+
+    const calGame = (thread, game) => {
+        console.log("calGame", game)
+        let result = true;
+        if (game.moves) {
+            result = false;
+            if (!game.progress || game.progress === "") {
+                handleWork(thread, {
+                    type: "startWorker",
+                    moves: game.moves,
+                    game: game.moves,
+                });
+            } else {
+                handleWork(thread, {
+                    type: "startWorker",
+                    moves: game.progress,
+                    game: game.moves,
+                });
+            }
+        }
+        return result
     }
     const handleWork = useCallback(async (thread, value) => {
         console.log("handleWork", value)
@@ -136,42 +139,19 @@ export default function Home() {
         return newValue;
     }
 
-    const startGame = async () => {
-        console.log("startGame", chess);
+    const startGame = async (data) => {
+        console.log("startGame", data);
         setLoad(true);
-        if (Array.isArray(chess)) {
-            const gamesPromises = chess.map(async (e, i) => {
-                if (e.done === true) {
-                    console.log("done true", i)
-                    return await fetch("api/progress/" + getRandomInt(0, 1000))
-                        .then((resp) => resp.json())
-                        .catch((error) => {
-                            console.error("fetch error", error);
-                        });
-                } else {
-                    return false
-                }
-            })
-
-            let newChess = [...chess];
-            const games = await Promise.all(gamesPromises)
-            console.log(games)
-            games.forEach((e, i) => {
-                if (e != false) {
-                    newChess[i].game = e;
-                    newChess[i].done = "new"
-                }
-            })
-            setChess(newChess);
-            setMsg({type: "calGame"});
-        } else {
-            let newChess = [];
-            for (let i = 0; i < nThreads; i++) {
-                newChess[i] = {done: true};
-            }
-            setChess(newChess);
+        if (data.done === true) {
+            return await fetch("api/progress/" + getRandomInt(0, 1000))
+                .then((resp) => resp.json())
+                .catch((error) => {
+                    console.error("fetch error", error);
+                });
         }
-    };
+
+    }
+
 
     const postGames = (game, result) => {
         console.log("postGame", game)
@@ -207,8 +187,6 @@ export default function Home() {
                 </section>
                 <section className="container my-5">
                     <h1>Jogadas: {abbreviateNumber(jogadas)}</h1>
-
-                    <h5>{nThreads} Robôs</h5>
                     <ul>
                         {Array.isArray(chess)
                             ? chess.map((games, i) => {
@@ -227,7 +205,7 @@ export default function Home() {
                                                     aria-valuemin="0"
                                                     aria-valuemax="100"
                                                 >
-                                                    {Math.floor(games.data.index / 150)}%
+                                                    {Math.floor(games.data.index)}
                                                 </div>
                                             </div>
                                         ) : null}
@@ -250,7 +228,19 @@ export default function Home() {
                         <button
                             className="d-flex align-items-center mx-auto btn btn-lg btn-primary"
                             type="button"
-                            onClick={startGame}
+                            onClick={async () => {
+                                let i = 0;
+                                let newChess = [...chess];
+                                for (let e of chess) {
+                                    if (e.done === true) {
+                                        const game = await startGame(e)
+                                        newChess[i] = {...newChess[i], game: game, done: calGame(i, game)}
+                                    }
+                                    i++;
+                                }
+                                console.log("newChess", newChess)
+                                setChess(newChess);
+                            }}
                         >
                             {load ? (
                                 <>
@@ -277,7 +267,7 @@ export default function Home() {
                             pessoas pode ser usado pra encontrar qual melhor movimento em jogo em andamento.</p>
                         <Link className="stretched-link"
                               href="https://cloud.prisma.io/Slender1808/oracle-chess/databrowser">Acesse os
-                            resultado</Link>
+                            resultados</Link>
                     </div>
                     <div className="mb-3">
                         <p className="fst-normal">Para concetar diretamento com banco de dados use link abaixo</p>
