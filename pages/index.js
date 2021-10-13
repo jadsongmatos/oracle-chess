@@ -178,7 +178,7 @@ export default function Home() {
                 <section className="container mb-5 text-center">
                     <h1>Oracle Chess</h1>
                     <p>Bem vindo ao oracle chess</p>
-                    <p>Ajude em encotrar as melhores jogas de xadrez</p>
+                    <p>Ajude em encotrar as melhores jogas de xadrez !</p>
                 </section>
                 <section className="container my-5">
                     <h1>Jogadas: {abbreviateNumber(jogadas)}</h1>
@@ -193,7 +193,7 @@ export default function Home() {
                                                 <>
                                                     {game.data.fen ?
                                                         <Chessground
-                                                            style={{width: "256px", height: "256px"}}
+                                                            style={{width: "200px", height: "200px"}}
                                                             fen={game.data.fen}
                                                             viewOnly={true}
                                                             draggable={{enabled: false}}
@@ -286,8 +286,10 @@ export default function Home() {
                     <div className="mb-3">
                         <p className="fst-normal">Para concetar diretamento com banco de dados use link abaixo</p>
                         <Link
-                            className="stretched-link sub-sup-font-size"
-                            href="postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres">
+                            href="postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres"
+                            style={{fontSize: "0.7rem !important"}}
+                            alt="postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres"
+                        >
                             postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres
                         </Link>
                     </div>
