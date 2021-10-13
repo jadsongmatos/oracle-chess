@@ -182,6 +182,7 @@ export default function Home() {
                 </section>
                 <section className="container my-5">
                     <h1>Jogadas: {abbreviateNumber(jogadas)}</h1>
+                    <h4>{deltaTime}s</h4>
                     <ol className={"list-group list-group-numbered"}>
                         {Array.isArray(robosState)
                             ? robosState.map((game, i) => {
@@ -201,7 +202,7 @@ export default function Home() {
                                                         />
                                                         : null}
                                                     {deltaTime ?
-                                                        <h4>{deltaTime}s</h4>
+                                                        <div className="col-auto">{game.game.moves}</div>
                                                         : null}
                                                 </>
                                                 : null}
@@ -287,7 +288,7 @@ export default function Home() {
                         <p className="fst-normal">Para concetar diretamento com banco de dados use link abaixo</p>
                         <Link
                             href="postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres"
-                            style={{fontSize: "0.7rem !important"}}
+                            style={{fontSize: "0.5rem !important"}}
                             alt="postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres"
                         >
                             postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres
