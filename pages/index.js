@@ -187,22 +187,26 @@ export default function Home() {
                         {Array.isArray(robosState)
                             ? robosState.map((game, i) => {
                                 return (
-                                    <li value={"Robo: " + i} key={i} className="list-group-item align-items-start">
+                                    <li value={"Robo: " + i} key={i}
+                                        className="container list-group-item align-items-start">
                                         <div
-                                            className="d-flex m-3 justify-content-between text-center align-items-center">
+                                            className="row m-3 justify-content-between text-center align-items-center px-0">
                                             {game.data ?
                                                 <>
                                                     {game.data.fen ?
-                                                        <Chessground
-                                                            style={{width: "200px", height: "200px"}}
-                                                            fen={game.data.fen}
-                                                            viewOnly={true}
-                                                            draggable={{enabled: false}}
-                                                            addDimensionsCssVars={false}
-                                                        />
+                                                        <div className="col-12 col-sm-6">
+                                                            <Chessground
+                                                                style={{width: "200px", height: "200px"}}
+                                                                fen={game.data.fen}
+                                                                viewOnly={true}
+                                                                draggable={{enabled: false}}
+                                                                addDimensionsCssVars={false}
+                                                            />
+                                                        </div>
                                                         : null}
                                                     {deltaTime ?
-                                                        <div className="col-auto">{game.game.moves}</div>
+                                                        <div
+                                                            className="col-12 col-sm-6 mt-3 mx-auto">{game.game.moves}</div>
                                                         : null}
                                                 </>
                                                 : null}
@@ -286,13 +290,12 @@ export default function Home() {
                     </div>
                     <div className="mb-3">
                         <p className="fst-normal">Para concetar diretamento com banco de dados use link abaixo</p>
-                        <Link
+                        <a
                             href="postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres"
-                            style={{fontSize: "0.5rem !important"}}
-                            alt="postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres"
+                            className="font-50"
                         >
                             postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres
-                        </Link>
+                        </a>
                     </div>
                 </section>
             </main>
