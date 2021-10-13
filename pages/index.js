@@ -1,8 +1,9 @@
 import Head from "next/head";
 import {useCallback, useEffect, useRef, useState} from "react";
 import Link from "next/link";
-import checkProgress from "../lib/checkProgress";
-//import Image from 'next/image'
+import dynamic from "next/dynamic"
+
+const Chessground = dynamic(() => import("react-chessground"), {ssr: false})
 
 export default function Home() {
     const [load, setLoad] = useState(false);
@@ -10,11 +11,14 @@ export default function Home() {
     const [robosState, setChess] = useState([0]);
     const [jogadas, setJogadas] = useState(0);
     const [nThreads, setNThreads] = useState(1);
+    const [lastTime, setLastTime] = useState(0);
+    const [deltaTime, setTime] = useState(0);
     const [msg, setMsg] = useState();
-    
+
 
     const workerRef = useRef([]);
     useEffect(() => {
+
         setNThreads(window.navigator.hardwareConcurrency);
 
         //const storageChess = localStorage.getItem("chess");
@@ -55,6 +59,8 @@ export default function Home() {
                         robosState[msg.thread].data = msg.data;
                         localStorage.setItem("chess", JSON.stringify(robosState))
 
+                        setTime(Math.floor(-(deltaTime - performance.now()) / 1000))
+                        setLastTime(performance.now())
                         setJogadas(jogadas + 100);
                         localStorage.setItem("jogadas", JSON.stringify(jogadas))
                         setLoad(true);
@@ -83,7 +89,7 @@ export default function Home() {
     }
 
     const calGame = (thread, game) => {
-        console.log("calGame", game)
+        //console.log("calGame", game)
         let result = true;
         if (game.moves) {
             result = false;
@@ -104,7 +110,7 @@ export default function Home() {
         return result
     }
     const handleWork = useCallback(async (thread, value) => {
-        console.log("handleWork", value)
+        //console.log("handleWork", value)
         workerRef.current[thread].postMessage(value);
     }, []);
 
@@ -176,33 +182,53 @@ export default function Home() {
                 </section>
                 <section className="container my-5">
                     <h1>Jogadas: {abbreviateNumber(jogadas)}</h1>
-                    <ul>
+                    <ol className={"list-group list-group-numbered"}>
                         {Array.isArray(robosState)
-                            ? robosState.map((games, i) => {
+                            ? robosState.map((game, i) => {
                                 return (
-                                    <li key={i}>
-                                        <h5>Robo: {i + 1}</h5>
-                                        {games && games.data && games.data.index ? (
-                                            <div className="progress">
+                                    <li value={"Robo: " + i} key={i} className="list-group-item align-items-start">
+                                        <div
+                                            className="d-flex m-3 justify-content-between text-center align-items-center">
+                                            {game.data ?
+                                                <>
+                                                    {game.data.fen ?
+                                                        <Chessground
+                                                            style={{width: "256px", height: "256px"}}
+                                                            fen={game.data.fen}
+                                                            viewOnly={true}
+                                                            draggable={{enabled: false}}
+                                                            addDimensionsCssVars={false}
+                                                        />
+                                                        : null}
+                                                    {deltaTime ?
+                                                        <h4>{deltaTime}s</h4>
+                                                        : null}
+                                                </>
+                                                : null}
+
+                                        </div>
+                                        {game && game.data && game.data.index ? (
+                                            <div className="progress my-3">
                                                 <div
                                                     className="progress-bar progress-bar-striped"
                                                     role="progressbar"
                                                     style={{
-                                                        width: Math.floor(games.data.index / 150) + "%",
+                                                        width: Math.floor(game.data.index / 150) + "%",
                                                     }}
-                                                    aria-valuenow={Math.floor(games.data.index / 150)}
+                                                    aria-valuenow={Math.floor(game.data.index / 150)}
                                                     aria-valuemin="0"
                                                     aria-valuemax="100"
                                                 >
-                                                    {Math.floor(games.data.index)}
+                                                    {Math.floor(game.data.index)}
                                                 </div>
                                             </div>
-                                        ) : null}
+                                        ) : game.data && game.data.index === 0 ? <div>zzz</div> : null}
                                     </li>
-                                );
+                                )
+                                    ;
                             })
                             : null}
-                    </ul>
+                    </ol>
                     <div className="mx-auto form-check form-switch">
                         <input
                             className="form-check-input"
@@ -260,9 +286,10 @@ export default function Home() {
                     <div className="mb-3">
                         <p className="fst-normal">Para concetar diretamento com banco de dados use link abaixo</p>
                         <Link
-                            className="stretched-link"
-                            href="postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres">postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres</Link>
-
+                            className="stretched-link sub-sup-font-size"
+                            href="postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres">
+                            postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres
+                        </Link>
                     </div>
                 </section>
             </main>

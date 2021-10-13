@@ -1,6 +1,6 @@
 {
   "name": "oracle-chess",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "private": false,
   "scripts": {
     "dev": "next dev",
@@ -16,6 +16,7 @@
     "chess.js": "^0.12.0",
     "next": "11.1.2",
     "react": "17.0.2",
+    "react-chessground": "^1.5.0",
     "react-dom": "17.0.2",
     "react-hooks-worker": "^1.0.0"
   },
