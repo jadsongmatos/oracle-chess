@@ -6,12 +6,9 @@
     "dev": "next dev -p 8080",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
-    "prisma:generate": "prisma generate"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@prisma/client": "^3.0.1",
     "bootstrap": "^5.0.0-beta3",
     "chess.js": "^0.12.0",
     "next": "11.1.2",

@@ -283,19 +283,14 @@ export default function Home() {
                             robos pra queles joguem todos proximos 4 movimentos,
                             depois que robo termina ele envia o resultado para banco de dados, os resultados de todas
                             pessoas pode ser usado pra encontrar qual melhor movimento em jogo em andamento.</p>
-                        <Link className="stretched-link"
-                              href="https://cloud.prisma.io/Slender1808/oracle-chess/databrowser">Acesse os
-                            resultados</Link>
-                    </div>
-                    <div className="mb-3">
-                        <p className="fst-normal">Para concetar diretamento com banco de dados use link abaixo</p>
                         <a
-                            href="postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres"
+                            href={process.env.DB + "chess.db"}
                             className="font-50"
                         >
-                            postgresql://livre:123456@8.tcp.ngrok.io:15994/postgres
+                            {process.env.DB + "chess.db"}
                         </a>
                     </div>
+
                 </section>
             </main>
 
