@@ -138,7 +138,7 @@ export default function Home() {
     const startGame = async () => {
         setLoad(true);
 
-        return await fetch(process.env.DB + "api/progress/" + getRandomInt(0, 1000))
+        return await fetch(process.env.DB + "game/" + getRandomInt(0, 1000))
             .then((resp) => resp.json())
             .catch(async (error) => {
                 console.error("fetch error", error);
@@ -149,7 +149,7 @@ export default function Home() {
 
     const postGames = (game, result) => {
         console.log("postGame", game)
-        fetch(process.env.DB + "api/progress/post", {
+        fetch(process.env.DB + "checkmate", {
             method: "POST",
             headers: new Headers({
                 "Content-Type": "application/json",
