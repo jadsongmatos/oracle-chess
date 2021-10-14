@@ -1,6 +1,6 @@
 {
   "name": "oracle-chess",
-  "version": "0.1.12",
+  "version": "0.1.14",
   "private": false,
   "scripts": {
     "dev": "next dev -p 8080",
@@ -19,7 +19,6 @@
   },
   "devDependencies": {
     "eslint": "7.32.0",
-    "eslint-config-next": "11.1.0",
-    "prisma": "^3.0.1"
+    "eslint-config-next": "11.1.0"
   }
 }
