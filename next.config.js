@@ -1,3 +1,6 @@
 module.exports = {
-  reactStrictMode: true,
+  reactStrictMode: false,
+  env:{
+    DB:process.env.DB,
+  }
 }

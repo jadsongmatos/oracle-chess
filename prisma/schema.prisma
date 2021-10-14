@@ -3,19 +3,19 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./chess.db"
 }
 
 model checkmate {
-  game String @id
+  game String?
+  id   Int     @id @default(autoincrement())
 }
 
 model initial {
-  moves    String    @id(map: "initial_pk")
-  progress String?   @unique(map: "initial_progress_uindex")
-  length   Int?      @default(4) @db.SmallInt
-  time     DateTime? @default(now()) @db.Timestamp(6)
-
-  @@index([time], map: "initial_time_index")
+  moves    String? @unique(map: "initial_moves_uindex")
+  progress String? @unique(map: "sqlite_autoindex_initial_1")
+  length   Int?    @default(4)
+  time     String?
+  id       Int     @id @default(autoincrement())
 }

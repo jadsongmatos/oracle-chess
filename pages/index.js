@@ -138,19 +138,18 @@ export default function Home() {
     const startGame = async () => {
         setLoad(true);
 
-        return await fetch("api/progress/" + getRandomInt(0, 1000))
+        return await fetch(process.env.DB + "api/progress/" + getRandomInt(0, 1000))
             .then((resp) => resp.json())
-            .catch((error) => {
+            .catch(async (error) => {
                 console.error("fetch error", error);
-            });
-
-
+                return setTimeout(async () => await startGame(), 500)
+            })
     }
 
 
     const postGames = (game, result) => {
         console.log("postGame", game)
-        fetch("api/progress/post", {
+        fetch(process.env.DB + "api/progress/post", {
             method: "POST",
             headers: new Headers({
                 "Content-Type": "application/json",
