@@ -177,7 +177,7 @@ export default function Home() {
         <section className="container mb-5 text-center">
           <h1>Oracle Chess</h1>
           <p>Bem vindo ao oracle chess</p>
-          <p>Ajude em encotrar as melhores jogas de xadrez !</p>
+          <p>Ajude a encotrar as melhores jogas de xadrez !</p>
         </section>
         <section className="container my-5">
           <h1>Jogadas: {abbreviateNumber(jogadas)}</h1>
@@ -283,12 +283,10 @@ export default function Home() {
         </section>
         <section className="container text-center">
           <div className="mb-3">
-            <p className="fst-normal">Cada pessoa tem numero de robos então uma jogada de xadrez é enviada
-              para
-              cada um dos seus
-              robos pra queles joguem todos proximos 4 movimentos,
-              depois que robo termina ele envia o resultado para banco de dados, os resultados de todas
-              pessoas pode ser usado pra encontrar qual melhor movimento em jogo em andamento.</p>
+            <p className="fst-normal">O banco de dados e prenchido com jogas dos usuarios, ao entrar usuario recebe uma
+              jogada e calcula proximos 4 movimentos, se algum dos movimentos resultado me checkmate o movimento é anota
+              para ser salvo no banco de dados. </p>
+            <p>Abaixo tem link para download do bando de dados.</p>
             <a
               href={process.env.DB + "chess.db"}
               className="font-80"
